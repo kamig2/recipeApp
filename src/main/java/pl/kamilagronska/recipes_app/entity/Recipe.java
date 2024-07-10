@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
+import java.time.LocalDate;
+
 @Entity(name = "Recipe")
 public class Recipe {
     @Id
@@ -20,14 +22,20 @@ public class Recipe {
     private boolean status;
     @Column(name = "note")
     private float note;
+    @Column(name = "date")
+    private LocalDate date;
 
-    public Recipe(Long recipeId, String title, String description, long userId, boolean status, float note) {
-        this.recipeId = recipeId;
+    public Recipe(String title, String description, long userId, boolean status, float note,LocalDate date) {
         this.title = title;
         this.description = description;
         this.userId = userId;
         this.status = status;
         this.note = note;
+        this.date = date;
+    }
+
+    public Recipe() {
+
     }
 
     public Long getRecipeId() {

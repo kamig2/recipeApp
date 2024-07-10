@@ -1,12 +1,11 @@
 package pl.kamilagronska.recipes_app.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity(name = "User")
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_id",updatable = false)
     private long userId;
     @Column(name = "first_name",nullable = false)
@@ -18,12 +17,15 @@ public class User {
     @Column(name = "password",nullable = false)
     private String password;
 
-    public User(long userId, String firstName, String lastName, String userName, String password) {
-        this.userId = userId;
+    public User(String firstName, String lastName, String userName, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.userName = userName;
         this.password = password;
+    }
+
+    public User() {
+
     }
 
     public long getUserId() {
