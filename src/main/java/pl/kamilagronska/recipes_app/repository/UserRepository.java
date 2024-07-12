@@ -7,4 +7,5 @@ import pl.kamilagronska.recipes_app.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByUserName(String userName);
+    User findUserByUserName(String userName);
 }
