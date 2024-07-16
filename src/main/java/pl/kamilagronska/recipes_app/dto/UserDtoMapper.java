@@ -14,7 +14,7 @@ public class UserDtoMapper implements Function<User,UserDto> {
                 user.getUserId(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getUserName()
+                user.getUsername()
         );
     }
 }
