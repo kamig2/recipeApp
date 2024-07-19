@@ -5,25 +5,24 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+import io.micrometer.observation.Observation;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import pl.kamilagronska.recipes_app.entity.User;
 
 import javax.crypto.SecretKey;
-import javax.security.auth.kerberos.EncryptionKey;
-import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
 
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY ="GindXWILKLSjOlvmxQSNDfl6OKb9twSM";
+    private static final String SECRET_KEY ="L5zQmF4X8LJm8VzqvhVhOvzn5b8/nJ1C+lBie7yFuF4=";
     public String extractUsername(String token){
         return extractClaim(token,Claims::getSubject);
     }
 
-    public String generateToken(User user){
+    public String generateToken(UserDetails user){
         String token = Jwts
                 .builder()
                 .subject(user.getUsername())
@@ -36,8 +35,13 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails user){
         String username  =  extractUsername(token);
-        return username.equals(user.getUsername());
+        return username.equals(user.getUsername()) && !isExpired(token,user);
 
+    }
+
+    private boolean isExpired(String token,UserDetails user){
+        Date date = extractClaim(token,Claims::getExpiration);
+        return date.before(new Date());
     }
 
     //pojedyncze Claims
