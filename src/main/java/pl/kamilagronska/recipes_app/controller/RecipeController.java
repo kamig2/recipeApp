@@ -1,12 +1,14 @@
 package pl.kamilagronska.recipes_app.controller;
 
-import jakarta.persistence.EnumType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import pl.kamilagronska.recipes_app.dto.RecipeDto;
-import pl.kamilagronska.recipes_app.entity.Recipe;
+import pl.kamilagronska.recipes_app.dto.RecipeRequest;
+import pl.kamilagronska.recipes_app.dto.RecipeResponse;
 import pl.kamilagronska.recipes_app.entity.Status;
+import pl.kamilagronska.recipes_app.entity.User;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
 import java.util.List;
@@ -18,25 +20,24 @@ public class RecipeController {
     private final RecipeService recipeService;
 
     @GetMapping
-    public List<Recipe> getAllRecipes(){
-        return recipeService.getAllRecipes();
+    public ResponseEntity<List<RecipeResponse>> getAllRecipes(){
+        return ResponseEntity.ok(recipeService.getAllRecipes());
     }
 
     @GetMapping("/{id}")
-    public Recipe getRecipe(@PathVariable Long id){
-        return recipeService.getRecipe(id);//sprawdzić czy dzial,a po skonfigurowaniu spring security
+    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable Long id){
+        return ResponseEntity.ok(recipeService.getRecipe(id));//sprawdzić czy dzial,a po skonfigurowaniu spring security
     }
 
     @PostMapping("/add")
-    public ResponseEntity addRecipe(@RequestBody RecipeDto recipe){//jako argument DTO? //dodac path variable
-        return recipeService.addRecipe(recipe);//sprawdzić czy dzial,a po skonfigurowaniu spring security
+    public ResponseEntity<RecipeResponse> addRecipe(@RequestBody RecipeRequest recipe){//jako argument DTO? //dodac path variable
+        return ResponseEntity.ok(recipeService.addRecipe(recipe));
     }
 
-    /*@PostMapping("/update/{id}")
-    public ResponseEntity updateRcipe(@PathVariable Long id,
-                                      @RequestParam String title,
-                                      @RequestParam String description,
-                                      @RequestParam String username,
-                                      @RequestParam Status status)*/
+    @PostMapping("/update/{id}")
+    public ResponseEntity updateRecipe(@PathVariable Long id, @RequestBody RecipeRequest request){
+        return ResponseEntity.ok(recipeService.updateRecipe(id,request));
+
+    }
 
 }

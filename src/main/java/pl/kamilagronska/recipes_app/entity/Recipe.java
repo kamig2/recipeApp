@@ -1,10 +1,7 @@
 package pl.kamilagronska.recipes_app.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -13,9 +10,11 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Recipe {
     @Id
-    @Column(name = "recipe_id",updatable = false)
+    @Column(name = "recipe_id",updatable = false,nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long recipeId;
     @Column(name ="title", nullable = false)
     private String title;
@@ -27,18 +26,9 @@ public class Recipe {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status;
-    @Column(name = "note")
-    private float note;
+    @Column(name = "rating")
+    private float rating;
     @Column(name = "date")
     private LocalDate date;
-
-    public Recipe(String title, String description, User user, Status status, float note,LocalDate date) {
-        this.title = title;
-        this.description = description;
-        this.user = user;
-        this.status = status;
-        this.note = note;
-        this.date = date;
-    }
 
 }
