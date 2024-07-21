@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "Recipe")
 @Getter
@@ -30,5 +32,8 @@ public class Recipe {
     private float rating;
     @Column(name = "date")
     private LocalDate date;
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Rating> ratingList = new ArrayList<>();
 
 }

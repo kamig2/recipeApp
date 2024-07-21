@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import pl.kamilagronska.recipes_app.dto.RatingRequest;
+import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
 import pl.kamilagronska.recipes_app.entity.Status;
@@ -15,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/recipes")
+@RequestMapping("/api/recipes")
 public class RecipeController {
     private final RecipeService recipeService;
 
@@ -39,5 +41,36 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.updateRecipe(id,request));
 
     }
+    @DeleteMapping("/delete/{recipeId}")
+    public ResponseEntity deleteRecipe(@PathVariable Long recipeId){
+        return recipeService.deleteRecipe(recipeId);
+    }
+
+    @GetMapping("/{recipeId}/rating")
+    public ResponseEntity<List<RatingResponse>> getOpinions(@PathVariable Long recipeId){
+        return ResponseEntity.ok(recipeService.getOpinions(recipeId));
+    }
+
+    @PostMapping("/{recipeId}/add/rating")
+    public ResponseEntity<RatingResponse> addOpinion(@PathVariable Long recipeId, @RequestBody RatingRequest request){
+        return ResponseEntity.ok(recipeService.addOpinion(recipeId,request));
+
+    }
+    @PostMapping("/{recipeId}/update/rating/{ratingId}")
+    public ResponseEntity<RatingResponse> updateOpinion(@PathVariable Long recipeId,
+                                                        @PathVariable Long ratingId,
+                                                        @RequestBody RatingRequest request){
+        return ResponseEntity.ok(recipeService.updateOpinion(recipeId,ratingId,request));
+
+    }
+
+    @DeleteMapping("/delete/rating/{ratingId}")
+    public ResponseEntity deleteOpinion(@PathVariable Long ratingId){
+        return recipeService.deleteOpinion(ratingId);
+    }
+
+
+
+
 
 }

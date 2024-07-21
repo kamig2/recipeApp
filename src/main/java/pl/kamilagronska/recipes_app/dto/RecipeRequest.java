@@ -12,6 +12,6 @@ public class RecipeRequest {
     String title;
     String description;
     Status status;
-    float rating;//zmienic żeby dodawać automatycznie //dodać encje z ocenami w relacji one to many
+    //float rating;//zmienic żeby dodawać automatycznie //dodać encje z ocenami w relacji one to many
     LocalDate date;
 }
