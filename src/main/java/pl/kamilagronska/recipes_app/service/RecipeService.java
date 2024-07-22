@@ -30,59 +30,59 @@ public class RecipeService {
 
     private final RatingRepository ratingRepository;
 
+
+    //wszystkie dostępne przepisy //todo zmienic na wszystkie publiczne
     public List<RecipeResponse> getAllRecipes(){
         List<Recipe> recipes = recipeRepository.findAll();
         List<RecipeResponse> recipeResponses = new ArrayList<>();
-        RecipeResponse recipeResponse;
         for(Recipe recipe : recipes){
-            recipeResponse = RecipeResponse.builder()
-                    .recipeId(recipe.getRecipeId())
-                    .title(recipe.getTitle())
-                    .description(recipe.getDescription())
-                    .username(recipe.getUser().getUsername())
-                    .status(recipe.getStatus())
-                    .rating(recipe.getRating())
-                    .date(recipe.getDate())
-                    .build();
-            recipeResponses.add(recipeResponse);
+            recipeResponses.add(convertRecipeToRecipeResponse(recipe));
         }
         return recipeResponses;
     }
+
+    // wyswietla prxepis o danym id //todo dodać sprawdzanie czy przepis jest publiczny
     public RecipeResponse getRecipe(Long id){
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new RuntimeException("recipe not found"));
-        RecipeResponse recipeResponse = RecipeResponse.builder()
-                .recipeId(recipe.getRecipeId())
-                .title(recipe.getTitle())
-                .description(recipe.getDescription())
-                .username(recipe.getUser().getUsername())
-                .status(recipe.getStatus())
-                .rating(recipe.getRating())
-                .date(recipe.getDate())
-                .build();
-        return recipeResponse;
+        return convertRecipeToRecipeResponse(recipe);
         //todo utworzyć klase do obsługi wyjątków gdy przepis noieznaleziony
     }
 
+    //todo wszystkie publiczne przepisy wybranego usera
+
+    //todo wszystkie przepisy zalogowanego usera
+
+    //dodawanie przepisu
     public RecipeResponse addRecipe(RecipeRequest request) { //przy dodawaniu ocena będzie 0
-        Recipe recipeSaved = convertReguestToRecipe(request);
-//        recipeSaved.setRating(0);
+        Recipe recipeSaved = convertRequestToRecipe(request);
         recipeRepository.save(recipeSaved);
-        RecipeResponse response = convertRecipeToRecipeResponse(recipeSaved);
-        return response;
+
+        User user = recipeSaved.getUser();
+        user.getRecipes().add(recipeSaved); //dodanie nowego przepisu do listy przepisów usera
+        userRepository.save(user);
+
+        return convertRecipeToRecipeResponse(recipeSaved);
     }
 
+    //update przepisu //todo każy user może updatować tylko dodane przez niego przepisy
     public RecipeResponse updateRecipe(Long id,RecipeRequest request){//przy update ocena float to średnia z ocen int z encji rating
-        Recipe recipeSaved = convertReguestToRecipe(request);
+        Recipe recipeSaved = convertRequestToRecipe(request);
         recipeSaved.setRecipeId(id);
-        recipeSaved.setRating(calculateRating(id));
+        recipeSaved.setRating(calculateRating(recipeSaved));
         recipeRepository.save(recipeSaved);
-        RecipeResponse response = convertRecipeToRecipeResponse(recipeSaved);
-        return response;
+        return convertRecipeToRecipeResponse(recipeSaved);
     }
 
+
+    //usuwanie przepisu o wybranym id
+    //todo tylko właściciel przepisu i admin może go usunąć
     @Transactional
     public ResponseEntity deleteRecipe(Long recipeId) {
+//        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found"));
+
+        /*recipe.getUser().getRecipes().remove(recipe);*/ //usunięcie przepisu z listy przepisów usera
         recipeRepository.deleteByRecipeId(recipeId);
+
         return  ResponseEntity.ok("Recipe deleted");
     }
 
@@ -94,7 +94,7 @@ public class RecipeService {
     }
 
     private RecipeResponse convertRecipeToRecipeResponse(Recipe recipe){
-        RecipeResponse response = RecipeResponse.builder()
+        return RecipeResponse.builder()
                 .recipeId(recipe.getRecipeId())
                 .title(recipe.getTitle())
                 .description(recipe.getDescription())
@@ -103,75 +103,86 @@ public class RecipeService {
                 .rating(recipe.getRating())
                 .date(recipe.getDate())
                 .build();
-        return response;
     }
 
 
-    private Recipe convertReguestToRecipe(RecipeRequest request){
-        Recipe recipe = Recipe.builder()
+    private Recipe convertRequestToRecipe(RecipeRequest request){
+        return Recipe.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .user(getCurrentUser())
                 .status(request.getStatus())
                 .date(request.getDate())
                 .build();
-        return recipe;
     }
 
-
-
-
-
-
-
-    private float calculateRating(Long recipeId){
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()-> new RuntimeException("recipe not found") );
-        List<Rating> ratings = recipe.getRatingList();
-        int sum = 0;
-        for(Rating rating : ratings){
-            sum += rating.getRate();
-        }
-        float ratingAvg = (float) sum / ratings.size();
-        return ratingAvg;
-    }
     private float calculateRating(Recipe recipe){
         List<Rating> ratings = recipe.getRatingList();
         int sum = 0;
-        for(Rating rating : ratings){
-            sum += rating.getRate();
+        if (ratings != null){
+            for(Rating rating : ratings){
+                sum += rating.getRate();
+            }
+            float ratingAvg = (float) sum / ratings.size();
+            return ratingAvg;
         }
-        float ratingAvg = (float) sum / ratings.size();
-        return ratingAvg;
+        return 0;
     }
 
     //wszystkie opinie do wybranego przepisu
     public List<RatingResponse> getOpinions(Long recipeId) {
         Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("recipe not found"));
         List<Rating> ratingList = recipe.getRatingList();
-        RatingResponse response;
         List<RatingResponse> responseList = new ArrayList<>();
         for(Rating rating : ratingList){
-            response = convertRatingToRatingResponse(rating);
-            responseList.add(response);
+            responseList.add(convertRatingToRatingResponse(rating));
         }
         return responseList;
     }
 
-    //dodadnie nowej opini
+    //wszystkie opinie wybranego urzytkownika
+    public List<RatingResponse> getUserAllRatings(Long userId) {
+        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new RuntimeException("User not found"));
+        List<Rating> ratingList = user.getRatingList();
+        List<RatingResponse> responseList = new ArrayList<>();
+        for (Rating rating : ratingList){
+            responseList.add(convertRatingToRatingResponse(rating));
+        }
+        return responseList;
+    }
+
+    //wszystkie opinie zalogowanego urzytkownika
+    public List<RatingResponse> getLoggedUserAllRatings() {
+        User user = getCurrentUser();
+        List<Rating> ratingList = user.getRatingList();
+        List<RatingResponse> responseList = new ArrayList<>();
+        for (Rating rating : ratingList){
+            responseList.add(convertRatingToRatingResponse(rating));
+        }
+        return responseList;
+    }
+
+
+
+    //dodadnie nowej opini przez zalogowanego urzytkownika
 
     public RatingResponse addOpinion(Long recipeId, RatingRequest request) {
         Rating rating = convertRatingRequestToRating(request,recipeId);
         ratingRepository.save(rating);
 
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("recipe not found"));
+        Recipe recipe = rating.getRecipe();
         recipe.getRatingList().add(rating);//dodanie oceny do listy ocen w przepisie
         recipe.setRating(calculateRating(recipe));//update całkowitej oceny
         recipeRepository.save(recipe);
 
+        User user =  rating.getUser();
+        user.getRatingList().add(rating); //dodanie oceny do listy ocen usera
+        userRepository.save(user);
+
         return convertRatingToRatingResponse(rating);
     }
 
-    //zmiana wybranej opini
+    //zmiana wybranej opini  //todo tylko właściciel opini może ją zmnienić
     public RatingResponse updateOpinion(Long recipeId, Long ratingId, RatingRequest request) {
         Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new RuntimeException("Rating not found"));
         rating.setRate(request.getRate());
@@ -185,12 +196,16 @@ public class RecipeService {
         return convertRatingToRatingResponse(rating);
     }
 
+    //todo tylko właściciel opini oraz admin może ją usunąc
     @Transactional
     public ResponseEntity deleteOpinion(Long ratingId){
         Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new RuntimeException("Rating not found"));
+
         Recipe recipe = rating.getRecipe();
-        recipe.getRatingList().remove(rating);
+        recipe.getRatingList().remove(rating); //usuwanie oceny z listy ocen w encji recipe
         recipe.setRating(calculateRating(recipe));
+
+        rating.getUser().getRatingList().remove(rating);  //usuwanie oceny z listy ocen w encji user
         ratingRepository.deleteById(ratingId);
         return ResponseEntity.ok("Opinion deleted");
     }
@@ -200,6 +215,7 @@ public class RecipeService {
                 .rate(request.getRate())
                 .opinion(request.getOpininion())
                 .recipe(recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found")))
+                .user(getCurrentUser())
                 .build();
     }
 
@@ -208,6 +224,7 @@ public class RecipeService {
                 .id(rating.getId())
                 .rate(rating.getRate())
                 .opinion(rating.getOpinion())
+                .username(rating.getUser().getUsername())
                 .build();
     }
 

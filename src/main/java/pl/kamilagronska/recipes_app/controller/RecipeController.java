@@ -51,6 +51,18 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getOpinions(recipeId));
     }
 
+    //wszystkie opinie dodane przez wybranego usera
+    @GetMapping("/user/{userId}/rating")
+    public ResponseEntity<List<RatingResponse>> getUserAllRatings(@PathVariable Long userId){
+        return ResponseEntity.ok(recipeService.getUserAllRatings(userId));
+    }
+
+    @GetMapping("/user/rating")
+    public ResponseEntity<List<RatingResponse>> getLoggedUserAllRatings(){
+        return ResponseEntity.ok(recipeService.getLoggedUserAllRatings());
+    }
+
+
     @PostMapping("/{recipeId}/add/rating")
     public ResponseEntity<RatingResponse> addOpinion(@PathVariable Long recipeId, @RequestBody RatingRequest request){
         return ResponseEntity.ok(recipeService.addOpinion(recipeId,request));

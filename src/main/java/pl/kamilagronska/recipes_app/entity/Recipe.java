@@ -23,7 +23,7 @@ public class Recipe {
     @Column(name="description", nullable = false)
     private String description;
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id",nullable = false)
     private User user;
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)

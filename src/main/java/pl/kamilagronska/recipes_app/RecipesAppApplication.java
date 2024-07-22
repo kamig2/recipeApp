@@ -12,10 +12,5 @@ public class RecipesAppApplication {
 		SpringApplication.run(RecipesAppApplication.class, args);
 	}
 
-	@Bean
-	public ModelMapper modelMapper() {
-		return new ModelMapper();
-	}
-
 
 }

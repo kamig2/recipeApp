@@ -9,4 +9,6 @@ public class RatingResponse {
     Long id;
     int rate;
     String opinion;
+
+    String username;
 }
