@@ -7,6 +7,8 @@ import lombok.Data;
 @Builder
 public class RatingResponse {
     Long id;
+
+    Long recipeId;
     int rate;
     String opinion;
 

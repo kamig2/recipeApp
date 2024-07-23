@@ -1,16 +1,13 @@
 package pl.kamilagronska.recipes_app.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import pl.kamilagronska.recipes_app.dto.RatingRequest;
 import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
-import pl.kamilagronska.recipes_app.entity.Status;
-import pl.kamilagronska.recipes_app.entity.User;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
 import java.util.List;
@@ -31,19 +28,29 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getRecipe(id));//sprawdzić czy dzial,a po skonfigurowaniu spring security
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<RecipeResponse> addRecipe(@RequestBody RecipeRequest recipe){//jako argument DTO? //dodac path variable
-        return ResponseEntity.ok(recipeService.addRecipe(recipe));
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<RecipeResponse>> getUserAllRecipes(@PathVariable Long userId){
+        return ResponseEntity.ok(recipeService.getUserAllRecipe(userId));
     }
 
-    @PostMapping("/update/{id}")
-    public ResponseEntity updateRecipe(@PathVariable Long id, @RequestBody RecipeRequest request){
-        return ResponseEntity.ok(recipeService.updateRecipe(id,request));
+    @GetMapping("/userRecipes")
+    public ResponseEntity<List<RecipeResponse>> getLoggedUserAllRecipes(){
+        return ResponseEntity.ok(recipeService.getLoggedUserAllRecipes());
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<RecipeResponse> addRecipe(@RequestBody RecipeRequest request){//jako argument DTO? //dodac path variable
+        return new ResponseEntity<>(recipeService.addRecipe(request), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/update/{recipeId}")
+    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId, @RequestBody RecipeRequest request){
+        return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request));
 
     }
     @DeleteMapping("/delete/{recipeId}")
-    public ResponseEntity deleteRecipe(@PathVariable Long recipeId){
-        return recipeService.deleteRecipe(recipeId);
+    public ResponseEntity<String> deleteRecipe(@PathVariable Long recipeId){
+        return ResponseEntity.ok(recipeService.deleteRecipe(recipeId));
     }
 
     @GetMapping("/{recipeId}/rating")
@@ -77,8 +84,8 @@ public class RecipeController {
     }
 
     @DeleteMapping("/delete/rating/{ratingId}")
-    public ResponseEntity deleteOpinion(@PathVariable Long ratingId){
-        return recipeService.deleteOpinion(ratingId);
+    public ResponseEntity<String> deleteOpinion(@PathVariable Long ratingId){
+        return ResponseEntity.ok(recipeService.deleteOpinion(ratingId));
     }
 
 

@@ -1,7 +1,6 @@
 package pl.kamilagronska.recipes_app.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,14 +10,13 @@ import pl.kamilagronska.recipes_app.dto.RatingRequest;
 import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
-//import pl.kamilagronska.recipes_app.dto.RecipeDtoMapper;
-import pl.kamilagronska.recipes_app.entity.Rating;
-import pl.kamilagronska.recipes_app.entity.Recipe;
-import pl.kamilagronska.recipes_app.entity.User;
+import pl.kamilagronska.recipes_app.entity.*;
 import pl.kamilagronska.recipes_app.repository.RatingRepository;
 import pl.kamilagronska.recipes_app.repository.RecipeRepository;
 import pl.kamilagronska.recipes_app.repository.UserRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,26 +29,53 @@ public class RecipeService {
     private final RatingRepository ratingRepository;
 
 
-    //wszystkie dostępne przepisy //todo zmienic na wszystkie publiczne
+    //wszystkie przepisy publiczne i prywatne tylko dla własciciela przepisu i admina
     public List<RecipeResponse> getAllRecipes(){
-        List<Recipe> recipes = recipeRepository.findAll();
+        List<Recipe> recipes;
+        recipes = recipeRepository.findAll();
         List<RecipeResponse> recipeResponses = new ArrayList<>();
         for(Recipe recipe : recipes){
-            recipeResponses.add(convertRecipeToRecipeResponse(recipe));
+            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
+                recipeResponses.add(convertRecipeToRecipeResponse(recipe));
+            }
         }
         return recipeResponses;
     }
 
-    // wyswietla prxepis o danym id //todo dodać sprawdzanie czy przepis jest publiczny
+    // wyswietla prxepis o danym id wszystkim jesli jest publiczny i wlascicielowi lub adminowi prywatny
     public RecipeResponse getRecipe(Long id){
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new RuntimeException("recipe not found"));
-        return convertRecipeToRecipeResponse(recipe);
+        if (recipe.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getStatus().equals(Status.PUBLIC)){
+            return convertRecipeToRecipeResponse(recipe);
+        }
+        throw new UnsupportedOperationException("recipe is not public");
+
         //todo utworzyć klase do obsługi wyjątków gdy przepis noieznaleziony
     }
 
-    //todo wszystkie publiczne przepisy wybranego usera
+    //todo sprawdzić wszystkie publiczne przepisy wybranego usera
+    public List<RecipeResponse> getUserAllRecipe(Long userId){
+        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new RuntimeException("User not found"));
+        List<RecipeResponse> responseList = new ArrayList<>();
+        List<Recipe> recipes = user.getRecipes();
+        for (Recipe recipe : recipes){
+            if (recipe.getStatus().equals(Status.PUBLIC) || user.equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN)){
+                responseList.add(convertRecipeToRecipeResponse(recipe));
+            }
+        }
+        return responseList;
+    }
 
     //todo wszystkie przepisy zalogowanego usera
+    public List<RecipeResponse> getLoggedUserAllRecipes(){
+        User user = getCurrentUser();
+        List<Recipe> recipes = user.getRecipes();
+        List<RecipeResponse> responseList = new ArrayList<>();
+        for (Recipe recipe : recipes){
+            responseList.add(convertRecipeToRecipeResponse(recipe));
+        }
+        return responseList;
+    }
 
     //dodawanie przepisu
     public RecipeResponse addRecipe(RecipeRequest request) { //przy dodawaniu ocena będzie 0
@@ -64,33 +89,46 @@ public class RecipeService {
         return convertRecipeToRecipeResponse(recipeSaved);
     }
 
-    //update przepisu //todo każy user może updatować tylko dodane przez niego przepisy
+    //update przepisu  każy user może updatować tylko dodane przez niego przepisy
     public RecipeResponse updateRecipe(Long id,RecipeRequest request){//przy update ocena float to średnia z ocen int z encji rating
-        Recipe recipeSaved = convertRequestToRecipe(request);
-        recipeSaved.setRecipeId(id);
-        recipeSaved.setRating(calculateRating(recipeSaved));
-        recipeRepository.save(recipeSaved);
-        return convertRecipeToRecipeResponse(recipeSaved);
+        Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new RuntimeException("recipe not found"));
+
+        if (recipe.getUser().equals(getCurrentUser())){//jesli user niezmienionego przepisu jest równy currentUser
+
+            recipe.setTitle(request.getTitle());
+            recipe.setDescription(request.getDescription());
+            recipe.setStatus(request.getStatus());
+            recipe.setDate(request.getDate());
+            recipe.setRecipeId(id);
+            recipe.setRating(calculateRating(recipe));
+            recipeRepository.save(recipe);
+            return convertRecipeToRecipeResponse(recipe);
+        }
+        throw new UnsupportedOperationException("this user is not the owner of the recipe");
+
     }
 
 
-    //usuwanie przepisu o wybranym id
-    //todo tylko właściciel przepisu i admin może go usunąć
+    //usuwanie przepisu o wybranym id, tylko właściciel przepisu i admin może go usunąć
     @Transactional
-    public ResponseEntity deleteRecipe(Long recipeId) {
-//        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found"));
+    public String deleteRecipe(Long recipeId) {
+        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found"));
 
-        /*recipe.getUser().getRecipes().remove(recipe);*/ //usunięcie przepisu z listy przepisów usera
-        recipeRepository.deleteByRecipeId(recipeId);
+        if (recipe.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN)){
 
-        return  ResponseEntity.ok("Recipe deleted");
+            recipe.getUser().getRecipes().remove(recipe); //usunięcie przepisu z listy przepisów usera
+            recipeRepository.deleteByRecipeId(recipeId);
+
+            return "Recipe deleted";
+        }
+        throw new UnsupportedOperationException("this user is not the owner of the recipe");
     }
 
     private User getCurrentUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsserame = authentication.getName();
-        User user = userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new UsernameNotFoundException("User not found"));
-        return user;
+        userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new UsernameNotFoundException("User not found"));
+        return userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new UsernameNotFoundException("User not found"));
     }
 
     private RecipeResponse convertRecipeToRecipeResponse(Recipe recipe){
@@ -123,11 +161,19 @@ public class RecipeService {
             for(Rating rating : ratings){
                 sum += rating.getRate();
             }
-            float ratingAvg = (float) sum / ratings.size();
+
+            double value = (double) sum / ratings.size();
+            BigDecimal bd = new BigDecimal(Double.toString(value));
+            bd = bd.setScale(1, RoundingMode.HALF_UP); // Zaokrąglenie do 1 miejsc po przecinku
+            float ratingAvg = bd.floatValue();
             return ratingAvg;
         }
         return 0;
     }
+
+    /*private List<Recipe> findAllPublicRecipes(){
+        return recipeRepository.findAllByStatus(Status.PUBLIC);
+    }*/
 
     //wszystkie opinie do wybranego przepisu
     public List<RatingResponse> getOpinions(Long recipeId) {
@@ -168,46 +214,61 @@ public class RecipeService {
 
     public RatingResponse addOpinion(Long recipeId, RatingRequest request) {
         Rating rating = convertRatingRequestToRating(request,recipeId);
-        ratingRepository.save(rating);
-
         Recipe recipe = rating.getRecipe();
-        recipe.getRatingList().add(rating);//dodanie oceny do listy ocen w przepisie
-        recipe.setRating(calculateRating(recipe));//update całkowitej oceny
-        recipeRepository.save(recipe);
+        if (!recipe.getUser().equals(getCurrentUser())){
+            if (request.getRate() >= 0 && request.getRate() <= 10){
+                ratingRepository.save(rating);
 
-        User user =  rating.getUser();
-        user.getRatingList().add(rating); //dodanie oceny do listy ocen usera
-        userRepository.save(user);
+                recipe.getRatingList().add(rating);//dodanie oceny do listy ocen w przepisie
+                recipe.setRating(calculateRating(recipe));//update całkowitej oceny
+                recipeRepository.save(recipe);
 
-        return convertRatingToRatingResponse(rating);
+                User user =  rating.getUser();
+                user.getRatingList().add(rating); //dodanie oceny do listy ocen usera
+                userRepository.save(user);
+
+                return convertRatingToRatingResponse(rating);
+            }
+        }
+
+        throw new IllegalArgumentException();
+
     }
 
-    //zmiana wybranej opini  //todo tylko właściciel opini może ją zmnienić
+    //zmiana wybranej opini, tylko własciciel moze zmiecnic
     public RatingResponse updateOpinion(Long recipeId, Long ratingId, RatingRequest request) {
         Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new RuntimeException("Rating not found"));
-        rating.setRate(request.getRate());
-        rating.setOpinion(request.getOpininion());
-        ratingRepository.save(rating);
+        if (rating.getUser().equals(getCurrentUser())){
+            rating.setRate(request.getRate());
+            rating.setOpinion(request.getOpininion());
+            ratingRepository.save(rating);
 
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found"));
-        recipe.setRating(calculateRating(recipe));
-        recipeRepository.save(recipe);
+            Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new RuntimeException("Recipe not found"));
+            recipe.setRating(calculateRating(recipe));
+            recipeRepository.save(recipe);
+            return convertRatingToRatingResponse(rating);
+        }
+        throw new UnsupportedOperationException("this user is not the owner of the review");
 
-        return convertRatingToRatingResponse(rating);
     }
 
-    //todo tylko właściciel opini oraz admin może ją usunąc
+    //usuwanie opini tylko właściciel opini oraz admin może ją usunąc
     @Transactional
-    public ResponseEntity deleteOpinion(Long ratingId){
+    public String deleteOpinion(Long ratingId){
         Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new RuntimeException("Rating not found"));
 
-        Recipe recipe = rating.getRecipe();
-        recipe.getRatingList().remove(rating); //usuwanie oceny z listy ocen w encji recipe
-        recipe.setRating(calculateRating(recipe));
+        if(rating.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN) ){
+            Recipe recipe = rating.getRecipe();
+            recipe.getRatingList().remove(rating); //usuwanie oceny z listy ocen w encji recipe
+            recipe.setRating(calculateRating(recipe));
 
-        rating.getUser().getRatingList().remove(rating);  //usuwanie oceny z listy ocen w encji user
-        ratingRepository.deleteById(ratingId);
-        return ResponseEntity.ok("Opinion deleted");
+            rating.getUser().getRatingList().remove(rating);  //usuwanie oceny z listy ocen w encji user
+            ratingRepository.deleteById(ratingId);
+            return "Opinion deleted";
+
+        }
+        throw new UnsupportedOperationException("this user is not the owner of the review");
+
     }
 
     private Rating convertRatingRequestToRating(RatingRequest request,Long recipeId) {
@@ -222,6 +283,7 @@ public class RecipeService {
     private RatingResponse convertRatingToRatingResponse(Rating rating) {
         return RatingResponse.builder()
                 .id(rating.getId())
+                .recipeId(rating.getRecipe().getRecipeId())
                 .rate(rating.getRate())
                 .opinion(rating.getOpinion())
                 .username(rating.getUser().getUsername())

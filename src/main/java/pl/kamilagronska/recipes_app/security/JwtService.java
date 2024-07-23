@@ -5,10 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
-import io.micrometer.observation.Observation;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import pl.kamilagronska.recipes_app.entity.User;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -23,14 +21,13 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails user){
-        String token = Jwts
+        return Jwts
                 .builder()
                 .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000*60*24))
+                .expiration(new Date(System.currentTimeMillis() + 1000*60*10))
                 .signWith(getKey())
                 .compact();
-        return token;
     }
 
     public boolean isTokenValid(String token, UserDetails user){

@@ -1,5 +1,6 @@
 package pl.kamilagronska.recipes_app.security;
 
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +38,6 @@ public class SecurityConfig {
                 .userDetailsService(userDetailsService)
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-//                .httpBasic(withDefaults());
         return http.build();
     }
 
