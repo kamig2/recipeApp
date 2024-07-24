@@ -19,11 +19,7 @@ public class UserAuthController {
 
     @PostMapping(  "/register")
     public ResponseEntity<UserAuthResponse> registerNewUser(@RequestBody UserRegisterRequest request){
-        UserAuthResponse response = service.addUser(request);
-        if (response == null){
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
-        }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.addUser(request));
     }
 
     @PostMapping("/login")
@@ -32,8 +28,4 @@ public class UserAuthController {
         return ResponseEntity.ok(service.login(request));
     }
 
-    /*@GetMapping( "/users")
-    public List<User> getAllUsers(){
-        return service.getAllUsers();
-    }*/
 }

@@ -43,7 +43,7 @@ public class RecipeController {
         return new ResponseEntity<>(recipeService.addRecipe(request), HttpStatus.CREATED);
     }
 
-    @PostMapping("/update/{recipeId}")
+    @PutMapping("/update/{recipeId}")
     public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId, @RequestBody RecipeRequest request){
         return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request));
 
@@ -75,7 +75,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.addOpinion(recipeId,request));
 
     }
-    @PostMapping("/{recipeId}/update/rating/{ratingId}")
+    @PutMapping("/{recipeId}/update/rating/{ratingId}")
     public ResponseEntity<RatingResponse> updateOpinion(@PathVariable Long recipeId,
                                                         @PathVariable Long ratingId,
                                                         @RequestBody RatingRequest request){
