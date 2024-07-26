@@ -23,10 +23,14 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
+
     private final RecipeRepository recipeRepository;
+
     private final UserRepository userRepository;
 
     private final RatingRepository ratingRepository;
+
+
 
 
     //wszystkie przepisy publiczne i prywatne tylko dla własciciela przepisu i admina
@@ -78,8 +82,9 @@ public class RecipeService {
     }
 
     //dodawanie przepisu
-    public RecipeResponse addRecipe(RecipeRequest request) { //przy dodawaniu ocena będzie 0
+    public RecipeResponse addRecipe(RecipeRequest request, List<String> urls ){ //przy dodawaniu ocena będzie 0
         Recipe recipeSaved = convertRequestToRecipe(request);
+        recipeSaved.setImageUrls(urls);
         recipeRepository.save(recipeSaved);
 
         User user = recipeSaved.getUser();
@@ -165,8 +170,7 @@ public class RecipeService {
                 double value = (double) sum / ratings.size();
                 BigDecimal bd = new BigDecimal(Double.toString(value));
                 bd = bd.setScale(1, RoundingMode.HALF_UP); // Zaokrąglenie do 1 miejsc po przecinku
-                float ratingAvg = bd.floatValue();
-                return ratingAvg;
+                return bd.floatValue();
             }
 
         }

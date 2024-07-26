@@ -36,4 +36,9 @@ public class Recipe {
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratingList = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "recipe_images", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls;
+
 }
