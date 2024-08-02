@@ -12,10 +12,6 @@ import pl.kamilagronska.recipes_app.dto.RecipeResponse;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -25,7 +21,6 @@ public class RecipeController {
 
     private final RecipeService recipeService;
 
-    public static String uploadDirectory = System.getProperty("user.dir")+"/upload";
 
     @GetMapping
     public ResponseEntity<List<RecipeResponse>> getAllRecipes(){
@@ -49,25 +44,17 @@ public class RecipeController {
 
     @PostMapping("/add")
     public ResponseEntity<RecipeResponse> addRecipe(@ModelAttribute RecipeRequest request,
-                                                    @RequestParam("files")List<MultipartFile> files) throws IOException {
-        //todo zmienić forme zapisu pliku aby dac unikalną nazwe
-        //todo dodać update zdjęc do funkcji update
-        //todo w response dodac url
+                                                    @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
+        // zmienić forme zapisu pliku aby dac unikalną nazwe
+        //dodać update zdjęc do funkcji update
+        //w response dodac url
         //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
-        List<String> urls = new ArrayList<>();
-        String orginalFilename;
-        for (MultipartFile file : files){
-            orginalFilename = file.getOriginalFilename();
-            Path path = Paths.get(uploadDirectory,orginalFilename);
-            Files.write(path,file.getBytes());
-            urls.add(orginalFilename);
-        }
-        return new ResponseEntity<>(recipeService.addRecipe(request,urls), HttpStatus.CREATED);
+        return new ResponseEntity<>(recipeService.addRecipe(request,files), HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{recipeId}")
-    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId, @RequestBody RecipeRequest request){
-        return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request));
+    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId, @ModelAttribute RecipeRequest request,@RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
+        return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request,files));
 
     }
     @DeleteMapping("/delete/{recipeId}")

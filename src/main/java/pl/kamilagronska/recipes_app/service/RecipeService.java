@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pl.kamilagronska.recipes_app.dto.RatingRequest;
 import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
@@ -15,10 +16,17 @@ import pl.kamilagronska.recipes_app.repository.RatingRepository;
 import pl.kamilagronska.recipes_app.repository.RecipeRepository;
 import pl.kamilagronska.recipes_app.repository.UserRepository;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +37,8 @@ public class RecipeService {
     private final UserRepository userRepository;
 
     private final RatingRepository ratingRepository;
+
+    public static String uploadDirectory = System.getProperty("user.dir")+"/upload";
 
 
 
@@ -54,10 +64,9 @@ public class RecipeService {
         }
         throw new UnsupportedOperationException("recipe is not public");
 
-        //todo utworzyć klase do obsługi wyjątków gdy przepis noieznaleziony
     }
 
-    //todo sprawdzić wszystkie publiczne przepisy wybranego usera
+    //sprawdzić wszystkie publiczne przepisy wybranego usera
     public List<RecipeResponse> getUserAllRecipe(Long userId){
         User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
         List<RecipeResponse> responseList = new ArrayList<>();
@@ -70,7 +79,7 @@ public class RecipeService {
         return responseList;
     }
 
-    //todo wszystkie przepisy zalogowanego usera
+    //wszystkie przepisy zalogowanego usera
     public List<RecipeResponse> getLoggedUserAllRecipes(){
         User user = getCurrentUser();
         List<Recipe> recipes = user.getRecipes();
@@ -82,9 +91,11 @@ public class RecipeService {
     }
 
     //dodawanie przepisu
-    public RecipeResponse addRecipe(RecipeRequest request, List<String> urls ){ //przy dodawaniu ocena będzie 0
+    public RecipeResponse addRecipe(RecipeRequest request, List<MultipartFile> files  ) throws IOException { //przy dodawaniu ocena będzie 0
         Recipe recipeSaved = convertRequestToRecipe(request);
-        recipeSaved.setImageUrls(urls);
+        if (files != null){
+            recipeSaved.setImageUrls(saveImages(files));
+        }
         recipeRepository.save(recipeSaved);
 
         User user = recipeSaved.getUser();
@@ -95,16 +106,26 @@ public class RecipeService {
     }
 
     //update przepisu  każy user może updatować tylko dodane przez niego przepisy
-    public RecipeResponse updateRecipe(Long id,RecipeRequest request){//przy update ocena float to średnia z ocen int z encji rating
+    public RecipeResponse updateRecipe(Long id, RecipeRequest request, List<MultipartFile> files) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
 
         if (recipe.getUser().equals(getCurrentUser())){//jesli user niezmienionego przepisu jest równy currentUser
 
-            recipe.setTitle(request.getTitle());
-            recipe.setDescription(request.getDescription());
-            recipe.setStatus(request.getStatus());
-            recipe.setDate(request.getDate());
-            recipe.setRecipeId(id);
+            if (request.getTitle() != null){
+                recipe.setTitle(request.getTitle());
+            }
+            if (request.getDescription() != null){
+                recipe.setDescription(request.getDescription());
+            }
+            if (request.getStatus() != null){
+                recipe.setStatus(request.getStatus());
+            }
+            if (files != null){
+                deleteImages(recipe);
+                recipe.setImageUrls(saveImages(files));//todo przy update jesli np dodaje tylko 1 zdj reszta zostaje takich samych żeby sie nie duplikowały
+            }
+
+            recipe.setDate(LocalDate.now());
             recipe.setRating(calculateRating(recipe));
             recipeRepository.save(recipe);
             return convertRecipeToRecipeResponse(recipe);
@@ -122,6 +143,7 @@ public class RecipeService {
         if (recipe.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN)){
 
             recipe.getUser().getRecipes().remove(recipe); //usunięcie przepisu z listy przepisów usera
+            deleteImages(recipe);//usuwanie niepotrzebnych juz zdjęc (które byłu przypisane do usuwanego przepisu)
             recipeRepository.deleteByRecipeId(recipeId);
 
             return "Recipe deleted";
@@ -145,6 +167,7 @@ public class RecipeService {
                 .status(recipe.getStatus())
                 .rating(recipe.getRating())
                 .date(recipe.getDate())
+                .imageUrls(recipe.getImageUrls())
                 .build();
     }
 
@@ -155,7 +178,7 @@ public class RecipeService {
                 .description(request.getDescription())
                 .user(getCurrentUser())
                 .status(request.getStatus())
-                .date(request.getDate())
+                .date(LocalDate.now())
                 .build();
     }
 
@@ -175,6 +198,31 @@ public class RecipeService {
 
         }
         return 0;
+    }
+
+    private List<String> saveImages(List<MultipartFile> files) throws IOException {
+        List<String> urls = new ArrayList<>();
+        String orginalFilename;
+        for (MultipartFile file : files){
+            orginalFilename = file.getOriginalFilename();
+            String uniqueFilename = UUID.randomUUID() + orginalFilename;
+            Path path = Paths.get(uploadDirectory,uniqueFilename);
+            Files.write(path,file.getBytes());
+            urls.add(uniqueFilename);
+        }
+        return urls;
+    }
+
+    private void deleteImages(Recipe recipe){
+        for (String fileName : recipe.getImageUrls()){
+            File file  = new File(uploadDirectory +"/"+ fileName);
+            System.out.println(fileName);
+            if (file.delete()) {
+                System.out.println("Plik został usunięty.");
+            } else {
+                System.err.println("Nie udało się usunąć pliku.");
+            }
+        }
     }
 
 
