@@ -91,10 +91,12 @@ public class RecipeService {
     }
 
     //dodawanie przepisu
-    public RecipeResponse addRecipe(RecipeRequest request, List<MultipartFile> files  ) throws IOException { //przy dodawaniu ocena będzie 0
+    public RecipeResponse addRecipe(RecipeRequest request) throws IOException { //przy dodawaniu ocena będzie 0
         Recipe recipeSaved = convertRequestToRecipe(request);
-        if (files != null){
-            recipeSaved.setImageUrls(saveImages(files));
+        if (request.getFiles() != null && !request.getFiles().isEmpty()){
+            recipeSaved.setImageUrls(saveImages(request.getFiles()));
+        }else {
+            recipeSaved.setImageUrls(new ArrayList<>());
         }
         recipeRepository.save(recipeSaved);
 
@@ -106,7 +108,7 @@ public class RecipeService {
     }
 
     //update przepisu  każy user może updatować tylko dodane przez niego przepisy
-    public RecipeResponse updateRecipe(Long id, RecipeRequest request, List<MultipartFile> files) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
+    public RecipeResponse updateRecipe(Long id, RecipeRequest request) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
 
         if (recipe.getUser().equals(getCurrentUser())){//jesli user niezmienionego przepisu jest równy currentUser
@@ -120,9 +122,10 @@ public class RecipeService {
             if (request.getStatus() != null){
                 recipe.setStatus(request.getStatus());
             }
-            if (files != null){
+            if (request.getFiles() != null){
+                System.out.println("w srodku");
                 deleteImages(recipe);
-                recipe.setImageUrls(saveImages(files));//todo przy update jesli np dodaje tylko 1 zdj reszta zostaje takich samych żeby sie nie duplikowały
+                recipe.setImageUrls(saveImages(request.getFiles()));//todo przy update jesli np dodaje tylko 1 zdj reszta zostaje takich samych żeby sie nie duplikowały
             }
 
             recipe.setDate(LocalDate.now());

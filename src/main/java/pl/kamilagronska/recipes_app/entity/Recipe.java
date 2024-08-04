@@ -18,9 +18,9 @@ public class Recipe {
     @Column(name = "recipe_id",updatable = false,nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long recipeId;
-    @Column(name ="title", nullable = false)
+    @Column(name ="title"/*, nullable = false*/)
     private String title;
-    @Column(name="description", nullable = false)
+    @Column(name="description"/*, nullable = false*/)
     private String description;
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)

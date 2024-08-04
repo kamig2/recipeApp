@@ -1,7 +1,9 @@
 package pl.kamilagronska.recipes_app.controller;
 
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,6 +11,7 @@ import pl.kamilagronska.recipes_app.dto.RatingRequest;
 import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
+import pl.kamilagronska.recipes_app.entity.Status;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
 import java.io.IOException;
@@ -42,19 +45,38 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getLoggedUserAllRecipes());
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<RecipeResponse> addRecipe(@ModelAttribute RecipeRequest request,
+    @PostMapping(value = "/add",
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<RecipeResponse> addRecipe(@RequestParam(value = "title") String title,
+                                                    @RequestParam("description") String description,
+                                                    @RequestParam("status") Status status,
                                                     @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
-        // zmienić forme zapisu pliku aby dac unikalną nazwe
-        //dodać update zdjęc do funkcji update
-        //w response dodac url
         //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
-        return new ResponseEntity<>(recipeService.addRecipe(request,files), HttpStatus.CREATED);
+        RecipeRequest request = RecipeRequest.builder()
+                .title(title)
+                .description(description)
+                .status(status)
+                .files(files)
+                .build();
+        return new ResponseEntity<>(recipeService.addRecipe(request), HttpStatus.CREATED);
     }
 
-    @PutMapping("/update/{recipeId}")
-    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId, @ModelAttribute RecipeRequest request,@RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
-        return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request,files));
+    @PutMapping(value = "/update/{recipeId}",
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId,
+                                                       @RequestParam(value = "title",required = false) String title,
+                                                       @RequestParam(value = "description",required = false) String description,
+                                                       @RequestParam(value = "status",required = false) Status status,
+                                                       @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
+        RecipeRequest request = RecipeRequest.builder()
+                .title(title)
+                .description(description)
+                .status(status)
+                .files(files)
+                .build();
+        return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request/*,files*/));
 
     }
     @DeleteMapping("/delete/{recipeId}")
@@ -96,9 +118,6 @@ public class RecipeController {
     public ResponseEntity<String> deleteOpinion(@PathVariable Long ratingId){
         return ResponseEntity.ok(recipeService.deleteOpinion(ratingId));
     }
-
-
-
 
 
 }
