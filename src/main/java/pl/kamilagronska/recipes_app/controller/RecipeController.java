@@ -11,6 +11,7 @@ import pl.kamilagronska.recipes_app.dto.RatingRequest;
 import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
+import pl.kamilagronska.recipes_app.entity.SortParam;
 import pl.kamilagronska.recipes_app.entity.Status;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
@@ -51,6 +52,11 @@ public class RecipeController {
     }
 
 //todo dodać endpoint który wyswietla posortowane przepisy według wyboru
+
+    @GetMapping("sortedBy/{param}")
+    public ResponseEntity<List<RecipeResponse>> getSortedRecipes(@PathVariable SortParam param){
+        return ResponseEntity.ok(recipeService.getSortedRecipies(param));
+    }
 
     @PostMapping(value = "/add",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},

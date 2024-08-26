@@ -1,6 +1,7 @@
 package pl.kamilagronska.recipes_app.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -90,9 +91,30 @@ public class RecipeService {
         return responseList;
     }
 
-    //wyswietla przepisy zawierające wyszukiwaną fraze //todo dodć wyszukiwanie po składnikach
+    //wyswietla przepisy zawierające wyszukiwaną fraze w tytule lub w składnikach
     public List<RecipeResponse> getRecipiesByPhrase(String phrase) {
         List<Recipe> recipes = recipeRepository.findAllByTitleContainingOrIngredientsContaining(phrase,phrase);
+        List<RecipeResponse> responseList = new ArrayList<>();
+        for (Recipe recipe : recipes){
+            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
+                responseList.add(convertRecipeToRecipeResponse(recipe));
+            }
+        }
+        return responseList;
+    }
+
+    //wyswietla przepisy posortowane na podstawie wybranego parametru
+    public List<RecipeResponse> getSortedRecipies(SortParam param) {
+        List<Recipe> recipes;
+        if (param.equals(SortParam.BestRating)){
+            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.DESC,"rating"));
+        }else if (param.equals(SortParam.BestRating.WorstRating)){
+            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"rating"));
+        }else if (param.equals(SortParam.Date)){
+            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"date"));
+        }else{
+            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"title"));
+        }
         List<RecipeResponse> responseList = new ArrayList<>();
         for (Recipe recipe : recipes){
             if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
@@ -359,6 +381,5 @@ public class RecipeService {
                 .username(rating.getUser().getUsername())
                 .build();
     }
-
 
 }
