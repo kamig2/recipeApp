@@ -90,6 +90,18 @@ public class RecipeService {
         return responseList;
     }
 
+    //wyswietla przepisy zawierające wyszukiwaną fraze //todo dodć wyszukiwanie po składnikach
+    public List<RecipeResponse> getRecipiesByPhrase(String phrase) {
+        List<Recipe> recipes = recipeRepository.findAllByTitleContaining(phrase);
+        List<RecipeResponse> responseList = new ArrayList<>();
+        for (Recipe recipe : recipes){
+            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
+                responseList.add(convertRecipeToRecipeResponse(recipe));
+            }
+        }
+        return responseList;
+    }
+
     //dodawanie przepisu
     public RecipeResponse addRecipe(RecipeRequest request) throws IOException { //przy dodawaniu ocena będzie 0
         Recipe recipeSaved = convertRequestToRecipe(request);

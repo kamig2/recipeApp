@@ -45,6 +45,13 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getLoggedUserAllRecipes());
     }
 
+    @GetMapping("/find/{phrase}")
+    public ResponseEntity<List<RecipeResponse>> getRecipiesByPhrase(@PathVariable String phrase){
+        return ResponseEntity.ok(recipeService.getRecipiesByPhrase(phrase));
+    }
+
+//todo dodać endpoint który wyswietla posortowane przepisy według wyboru
+
     @PostMapping(value = "/add",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
