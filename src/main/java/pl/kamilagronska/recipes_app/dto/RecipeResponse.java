@@ -12,6 +12,7 @@ import java.util.List;
 public class RecipeResponse {
     Long recipeId;
     String title;
+    String ingredients;
     String description;
     String username;
     Status status;

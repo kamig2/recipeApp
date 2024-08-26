@@ -92,7 +92,7 @@ public class RecipeService {
 
     //wyswietla przepisy zawierające wyszukiwaną fraze //todo dodć wyszukiwanie po składnikach
     public List<RecipeResponse> getRecipiesByPhrase(String phrase) {
-        List<Recipe> recipes = recipeRepository.findAllByTitleContaining(phrase);
+        List<Recipe> recipes = recipeRepository.findAllByTitleContainingOrIngredientsContaining(phrase,phrase);
         List<RecipeResponse> responseList = new ArrayList<>();
         for (Recipe recipe : recipes){
             if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
@@ -177,6 +177,7 @@ public class RecipeService {
         return RecipeResponse.builder()
                 .recipeId(recipe.getRecipeId())
                 .title(recipe.getTitle())
+                .ingredients(recipe.getIngredients())
                 .description(recipe.getDescription())
                 .username(recipe.getUser().getUsername())
                 .status(recipe.getStatus())
@@ -190,6 +191,7 @@ public class RecipeService {
     private Recipe convertRequestToRecipe(RecipeRequest request){
         return Recipe.builder()
                 .title(request.getTitle())
+                .ingredients(request.getIngredients())
                 .description(request.getDescription())
                 .user(getCurrentUser())
                 .status(request.getStatus())
@@ -233,7 +235,7 @@ public class RecipeService {
             File file  = new File(uploadDirectory +"/"+ fileName);
             System.out.println(fileName);
             if (file.delete()) {
-                System.out.println("Plik został usunięty.");
+                System.out.println("Plik został usunięty."); //zamiast sout dać loger
             } else {
                 System.err.println("Nie udało się usunąć pliku.");
             }

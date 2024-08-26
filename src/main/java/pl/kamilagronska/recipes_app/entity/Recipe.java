@@ -20,6 +20,9 @@ public class Recipe {
     private Long recipeId;
     @Column(name ="title"/*, nullable = false*/)
     private String title;
+
+    @Column(name = "ingredients")
+    private String ingredients;
     @Column(name="description"/*, nullable = false*/)
     private String description;
     @ManyToOne

@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class RecipeRequest {
     String title;
+    String ingredients;
     String description;
     Status status;
     List<MultipartFile> files;

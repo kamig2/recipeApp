@@ -56,12 +56,14 @@ public class RecipeController {
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<RecipeResponse> addRecipe(@RequestParam(value = "title") String title,
+                                                    @RequestParam(value = "ingredients") String ingredients,
                                                     @RequestParam("description") String description,
                                                     @RequestParam("status") Status status,
                                                     @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
+                .ingredients(ingredients)
                 .description(description)
                 .status(status)
                 .files(files)
@@ -74,11 +76,13 @@ public class RecipeController {
             produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId,
                                                        @RequestParam(value = "title",required = false) String title,
+                                                       @RequestParam(value = "ingredients") String ingredients,
                                                        @RequestParam(value = "description",required = false) String description,
                                                        @RequestParam(value = "status",required = false) Status status,
                                                        @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
+                .ingredients(ingredients)
                 .description(description)
                 .status(status)
                 .files(files)
