@@ -28,9 +28,6 @@ public class Recipe {
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
-    @Column(name = "status", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Status status;
     @Column(name = "rating")
     private float rating;
     @Column(name = "date")

@@ -12,7 +12,6 @@ import pl.kamilagronska.recipes_app.dto.RatingResponse;
 import pl.kamilagronska.recipes_app.dto.RecipeRequest;
 import pl.kamilagronska.recipes_app.dto.RecipeResponse;
 import pl.kamilagronska.recipes_app.entity.SortParam;
-import pl.kamilagronska.recipes_app.entity.Status;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class RecipeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<RecipeResponse> getRecipe(@PathVariable Long id){
-        return ResponseEntity.ok(recipeService.getRecipe(id));//sprawdzić czy dzial,a po skonfigurowaniu spring security
+        return ResponseEntity.ok(recipeService.getRecipe(id));
     }
 
     @GetMapping("/user/{userId}")
@@ -51,8 +50,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getRecipiesByPhrase(phrase));
     }
 
-//todo dodać endpoint który wyswietla posortowane przepisy według wyboru
-
+    //endpoint który wyswietla posortowane przepisy według wyboru
     @GetMapping("sortedBy/{param}")
     public ResponseEntity<List<RecipeResponse>> getSortedRecipes(@PathVariable SortParam param){
         return ResponseEntity.ok(recipeService.getSortedRecipies(param));
@@ -64,14 +62,12 @@ public class RecipeController {
     public ResponseEntity<RecipeResponse> addRecipe(@RequestParam(value = "title") String title,
                                                     @RequestParam(value = "ingredients") String ingredients,
                                                     @RequestParam("description") String description,
-                                                    @RequestParam("status") Status status,
                                                     @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
                 .ingredients(ingredients)
                 .description(description)
-                .status(status)
                 .files(files)
                 .build();
         return new ResponseEntity<>(recipeService.addRecipe(request), HttpStatus.CREATED);
@@ -84,13 +80,11 @@ public class RecipeController {
                                                        @RequestParam(value = "title",required = false) String title,
                                                        @RequestParam(value = "ingredients") String ingredients,
                                                        @RequestParam(value = "description",required = false) String description,
-                                                       @RequestParam(value = "status",required = false) Status status,
                                                        @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
                 .ingredients(ingredients)
                 .description(description)
-                .status(status)
                 .files(files)
                 .build();
         return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request/*,files*/));

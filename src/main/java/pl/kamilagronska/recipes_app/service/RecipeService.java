@@ -50,9 +50,7 @@ public class RecipeService {
         recipes = recipeRepository.findAll();
         List<RecipeResponse> recipeResponses = new ArrayList<>();
         for(Recipe recipe : recipes){
-            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
-                recipeResponses.add(convertRecipeToRecipeResponse(recipe));
-            }
+            recipeResponses.add(convertRecipeToRecipeResponse(recipe));
         }
         return recipeResponses;
     }
@@ -60,11 +58,7 @@ public class RecipeService {
     // wyswietla prxepis o danym id wszystkim jesli jest publiczny i wlascicielowi lub adminowi prywatny
     public RecipeResponse getRecipe(Long id){
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
-        if (recipe.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getStatus().equals(Status.PUBLIC)){
-            return convertRecipeToRecipeResponse(recipe);
-        }
-        throw new UnsupportedOperationException("recipe is not public");
-
+        return convertRecipeToRecipeResponse(recipe);
     }
 
     //sprawdzić wszystkie publiczne przepisy wybranego usera
@@ -73,9 +67,7 @@ public class RecipeService {
         List<RecipeResponse> responseList = new ArrayList<>();
         List<Recipe> recipes = user.getRecipes();
         for (Recipe recipe : recipes){
-            if (recipe.getStatus().equals(Status.PUBLIC) || user.equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN)){
-                responseList.add(convertRecipeToRecipeResponse(recipe));
-            }
+            responseList.add(convertRecipeToRecipeResponse(recipe));
         }
         return responseList;
     }
@@ -96,9 +88,7 @@ public class RecipeService {
         List<Recipe> recipes = recipeRepository.findAllByTitleContainingOrIngredientsContaining(phrase,phrase);
         List<RecipeResponse> responseList = new ArrayList<>();
         for (Recipe recipe : recipes){
-            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
-                responseList.add(convertRecipeToRecipeResponse(recipe));
-            }
+            responseList.add(convertRecipeToRecipeResponse(recipe));
         }
         return responseList;
     }
@@ -117,9 +107,7 @@ public class RecipeService {
         }
         List<RecipeResponse> responseList = new ArrayList<>();
         for (Recipe recipe : recipes){
-            if (recipe.getStatus().equals(Status.PUBLIC) || getCurrentUser().getRole().equals(Role.ADMIN) || recipe.getUser().equals(getCurrentUser())){
-                responseList.add(convertRecipeToRecipeResponse(recipe));
-            }
+            responseList.add(convertRecipeToRecipeResponse(recipe));
         }
         return responseList;
     }
@@ -152,9 +140,6 @@ public class RecipeService {
             }
             if (request.getDescription() != null){
                 recipe.setDescription(request.getDescription());
-            }
-            if (request.getStatus() != null){
-                recipe.setStatus(request.getStatus());
             }
             if (request.getFiles() != null){
                 System.out.println("w srodku");
@@ -202,7 +187,6 @@ public class RecipeService {
                 .ingredients(recipe.getIngredients())
                 .description(recipe.getDescription())
                 .username(recipe.getUser().getUsername())
-                .status(recipe.getStatus())
                 .rating(recipe.getRating())
                 .date(recipe.getDate())
                 .imageUrls(recipe.getImageUrls())
@@ -216,7 +200,6 @@ public class RecipeService {
                 .ingredients(request.getIngredients())
                 .description(request.getDescription())
                 .user(getCurrentUser())
-                .status(request.getStatus())
                 .date(LocalDate.now())
                 .build();
     }
