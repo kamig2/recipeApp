@@ -7,10 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pl.kamilagronska.recipes_app.dto.RatingRequest;
-import pl.kamilagronska.recipes_app.dto.RatingResponse;
-import pl.kamilagronska.recipes_app.dto.RecipeRequest;
-import pl.kamilagronska.recipes_app.dto.RecipeResponse;
+import pl.kamilagronska.recipes_app.dto.*;
 import pl.kamilagronska.recipes_app.entity.SortParam;
 import pl.kamilagronska.recipes_app.service.RecipeService;
 
@@ -26,43 +23,51 @@ public class RecipeController {
 
 
     @GetMapping
-    public ResponseEntity<List<RecipeResponse>> getAllRecipes(){
-        return ResponseEntity.ok(recipeService.getAllRecipes());
+    public ResponseEntity<RecipeResponse> getAllRecipes(@RequestParam(value = "pageNumber",defaultValue = "0",required = false) int pageNumber,
+                                                         @RequestParam(value = "pageSize",defaultValue = "5",required = false) int pageSize){
+        return ResponseEntity.ok(recipeService.getAllRecipes(pageNumber,pageSize));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable Long id){
+    public ResponseEntity<RecipeDto> getRecipe(@PathVariable Long id){
         return ResponseEntity.ok(recipeService.getRecipe(id));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<RecipeResponse>> getUserAllRecipes(@PathVariable Long userId){
-        return ResponseEntity.ok(recipeService.getUserAllRecipe(userId));
+    public ResponseEntity<RecipeResponse> getUserAllRecipes(@PathVariable Long userId,
+                                                             @RequestParam(value = "pageNumber", defaultValue = "0",required = false) int pageNumber,
+                                                             @RequestParam(value = "pageSize",defaultValue = "5",required = false) int pageSize){
+        return ResponseEntity.ok(recipeService.getUserAllRecipe(userId,pageNumber,pageSize));
     }
 
     @GetMapping("/userRecipes")
-    public ResponseEntity<List<RecipeResponse>> getLoggedUserAllRecipes(){
-        return ResponseEntity.ok(recipeService.getLoggedUserAllRecipes());
+    public ResponseEntity<RecipeResponse> getLoggedUserAllRecipes(@RequestParam(value = "pageNumber", defaultValue = "0",required = false) int pageNumber,
+                                                                   @RequestParam(value = "pageSize",defaultValue = "5",required = false) int pageSize){
+        return ResponseEntity.ok(recipeService.getLoggedUserAllRecipes(pageNumber,pageSize));
     }
 
     @GetMapping("/find/{phrase}")
-    public ResponseEntity<List<RecipeResponse>> getRecipiesByPhrase(@PathVariable String phrase){
-        return ResponseEntity.ok(recipeService.getRecipiesByPhrase(phrase));
+    public ResponseEntity<RecipeResponse> getRecipiesByPhrase(@PathVariable String phrase,
+                                                               @RequestParam(value = "pageNumber", defaultValue = "0",required = false) int pageNumber,
+                                                               @RequestParam(value = "pageSize",defaultValue = "5",required = false) int pageSize){
+        return ResponseEntity.ok(recipeService.getRecipiesByPhrase(phrase,pageNumber,pageSize));
     }
 
     //endpoint który wyswietla posortowane przepisy według wyboru
     @GetMapping("sortedBy/{param}")
-    public ResponseEntity<List<RecipeResponse>> getSortedRecipes(@PathVariable SortParam param){
-        return ResponseEntity.ok(recipeService.getSortedRecipies(param));
+    public ResponseEntity<RecipeResponse> getSortedRecipes(@PathVariable SortParam param,
+                                                            @RequestParam(value = "pageNumber", defaultValue = "0",required = false) int pageNumber,
+                                                            @RequestParam(value = "pageSize",defaultValue = "5",required = false) int pageSize){
+        return ResponseEntity.ok(recipeService.getSortedRecipies(param,pageNumber,pageSize));
     }
 
     @PostMapping(value = "/add",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<RecipeResponse> addRecipe(@RequestParam(value = "title") String title,
-                                                    @RequestParam(value = "ingredients") String ingredients,
-                                                    @RequestParam("description") String description,
-                                                    @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
+    public ResponseEntity<RecipeDto> addRecipe(@RequestParam(value = "title") String title,
+                                               @RequestParam(value = "ingredients") String ingredients,
+                                               @RequestParam("description") String description,
+                                               @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
@@ -76,11 +81,11 @@ public class RecipeController {
     @PutMapping(value = "/update/{recipeId}",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long recipeId,
-                                                       @RequestParam(value = "title",required = false) String title,
-                                                       @RequestParam(value = "ingredients") String ingredients,
-                                                       @RequestParam(value = "description",required = false) String description,
-                                                       @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
+    public ResponseEntity<RecipeDto> updateRecipe(@PathVariable Long recipeId,
+                                                  @RequestParam(value = "title",required = false) String title,
+                                                  @RequestParam(value = "ingredients") String ingredients,
+                                                  @RequestParam(value = "description",required = false) String description,
+                                                  @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
                 .ingredients(ingredients)

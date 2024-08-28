@@ -1,16 +1,16 @@
 package pl.kamilagronska.recipes_app.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import pl.kamilagronska.recipes_app.dto.RatingRequest;
-import pl.kamilagronska.recipes_app.dto.RatingResponse;
-import pl.kamilagronska.recipes_app.dto.RecipeRequest;
-import pl.kamilagronska.recipes_app.dto.RecipeResponse;
+import pl.kamilagronska.recipes_app.dto.*;
 import pl.kamilagronska.recipes_app.entity.*;
 import pl.kamilagronska.recipes_app.exception.ResourceNotFoundException;
 import pl.kamilagronska.recipes_app.repository.RatingRepository;
@@ -44,76 +44,70 @@ public class RecipeService {
 
 
 
-    //wszystkie przepisy publiczne i prywatne tylko dla własciciela przepisu i admina
-    public List<RecipeResponse> getAllRecipes(){
+    //wyswietla wszystkie przepisy na okreslonej stronie
+    public RecipeResponse getAllRecipes(int pageNumber, int pageSize){
+        Pageable pageable = PageRequest.of(pageNumber,pageSize);
+        Page<Recipe> recipePage = recipeRepository.findAll(pageable);
         List<Recipe> recipes;
-        recipes = recipeRepository.findAll();
-        List<RecipeResponse> recipeResponses = new ArrayList<>();
-        for(Recipe recipe : recipes){
-            recipeResponses.add(convertRecipeToRecipeResponse(recipe));
-        }
-        return recipeResponses;
+        recipes = recipePage.getContent();
+        return convertToRecipeResponse(recipes,recipePage);
     }
 
-    // wyswietla prxepis o danym id wszystkim jesli jest publiczny i wlascicielowi lub adminowi prywatny
-    public RecipeResponse getRecipe(Long id){
+    // wyswietla prxepis o danym id
+    public RecipeDto getRecipe(Long id){
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
-        return convertRecipeToRecipeResponse(recipe);
+        return convertRecipeToRecipeDto(recipe);
     }
 
-    //sprawdzić wszystkie publiczne przepisy wybranego usera
-    public List<RecipeResponse> getUserAllRecipe(Long userId){
+    //wszystkie przepisy wybranego usera
+    public RecipeResponse getUserAllRecipe(Long userId,int pageNumber, int pageSize){
         User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
-        List<RecipeResponse> responseList = new ArrayList<>();
-        List<Recipe> recipes = user.getRecipes();
-        for (Recipe recipe : recipes){
-            responseList.add(convertRecipeToRecipeResponse(recipe));
-        }
-        return responseList;
+        Pageable pageable = PageRequest.of(pageNumber,pageSize);
+        Page<Recipe> recipePage = recipeRepository.findAllByUser(user,pageable);
+        List<Recipe> recipes = recipePage.getContent();
+        return convertToRecipeResponse(recipes,recipePage);
     }
 
     //wszystkie przepisy zalogowanego usera
-    public List<RecipeResponse> getLoggedUserAllRecipes(){
+    public RecipeResponse getLoggedUserAllRecipes(int pageNumber, int pageSize){
         User user = getCurrentUser();
-        List<Recipe> recipes = user.getRecipes();
-        List<RecipeResponse> responseList = new ArrayList<>();
-        for (Recipe recipe : recipes){
-            responseList.add(convertRecipeToRecipeResponse(recipe));
-        }
-        return responseList;
+        Pageable pageable = PageRequest.of(pageNumber,pageSize);
+        Page<Recipe> recipePage = recipeRepository.findAllByUser(user,pageable);
+        List<Recipe> recipes = recipePage.getContent();
+        return convertToRecipeResponse(recipes,recipePage);
     }
 
     //wyswietla przepisy zawierające wyszukiwaną fraze w tytule lub w składnikach
-    public List<RecipeResponse> getRecipiesByPhrase(String phrase) {
-        List<Recipe> recipes = recipeRepository.findAllByTitleContainingOrIngredientsContaining(phrase,phrase);
-        List<RecipeResponse> responseList = new ArrayList<>();
-        for (Recipe recipe : recipes){
-            responseList.add(convertRecipeToRecipeResponse(recipe));
-        }
-        return responseList;
+    public RecipeResponse getRecipiesByPhrase(String phrase, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber,pageSize);
+        Page<Recipe> recipePage = recipeRepository.findAllByTitleContainingOrIngredientsContaining(phrase,phrase,pageable);
+        List<Recipe> recipes = recipePage.getContent();
+        return convertToRecipeResponse(recipes,recipePage);
     }
 
     //wyswietla przepisy posortowane na podstawie wybranego parametru
-    public List<RecipeResponse> getSortedRecipies(SortParam param) {
+    public RecipeResponse getSortedRecipies(SortParam param,int pageNumber, int pageSize) {
         List<Recipe> recipes;
+        Page<Recipe> recipePage;
         if (param.equals(SortParam.BestRating)){
-            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.DESC,"rating"));
-        }else if (param.equals(SortParam.BestRating.WorstRating)){
-            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"rating"));
+            Pageable pageable = PageRequest.of(pageNumber,pageSize,Sort.by(Sort.Direction.DESC,"rating"));
+            recipePage = recipeRepository.findAll(pageable);
+        }else if (param.equals(SortParam.WorstRating)){
+            Pageable pageable = PageRequest.of(pageNumber,pageSize,Sort.by(Sort.Direction.ASC,"rating"));
+            recipePage = recipeRepository.findAll(pageable);
         }else if (param.equals(SortParam.Date)){
-            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"date"));
+            Pageable pageable = PageRequest.of(pageNumber,pageSize,Sort.by(Sort.Direction.ASC,"date"));
+            recipePage = recipeRepository.findAll(pageable);
         }else{
-            recipes = recipeRepository.findAll(Sort.by(Sort.Direction.ASC,"title"));
+            Pageable pageable = PageRequest.of(pageNumber,pageSize,Sort.by(Sort.Direction.ASC,"title"));
+            recipePage = recipeRepository.findAll(pageable);
         }
-        List<RecipeResponse> responseList = new ArrayList<>();
-        for (Recipe recipe : recipes){
-            responseList.add(convertRecipeToRecipeResponse(recipe));
-        }
-        return responseList;
+        recipes = recipePage.getContent();
+        return convertToRecipeResponse(recipes,recipePage);
     }
 
     //dodawanie przepisu
-    public RecipeResponse addRecipe(RecipeRequest request) throws IOException { //przy dodawaniu ocena będzie 0
+    public RecipeDto addRecipe(RecipeRequest request) throws IOException { //przy dodawaniu ocena będzie 0
         Recipe recipeSaved = convertRequestToRecipe(request);
         if (request.getFiles() != null && !request.getFiles().isEmpty()){
             recipeSaved.setImageUrls(saveImages(request.getFiles()));
@@ -126,11 +120,11 @@ public class RecipeService {
         user.getRecipes().add(recipeSaved); //dodanie nowego przepisu do listy przepisów usera
         userRepository.save(user);
 
-        return convertRecipeToRecipeResponse(recipeSaved);
+        return convertRecipeToRecipeDto(recipeSaved);
     }
 
     //update przepisu  każy user może updatować tylko dodane przez niego przepisy
-    public RecipeResponse updateRecipe(Long id, RecipeRequest request) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
+    public RecipeDto updateRecipe(Long id, RecipeRequest request) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
         Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
 
         if (recipe.getUser().equals(getCurrentUser())){//jesli user niezmienionego przepisu jest równy currentUser
@@ -150,7 +144,7 @@ public class RecipeService {
             recipe.setDate(LocalDate.now());
             recipe.setRating(calculateRating(recipe));
             recipeRepository.save(recipe);
-            return convertRecipeToRecipeResponse(recipe);
+            return convertRecipeToRecipeDto(recipe);
         }
         throw new UnsupportedOperationException("this user is not the owner of the recipe");
 
@@ -180,8 +174,8 @@ public class RecipeService {
         return userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new ResourceNotFoundException("User not found"));
     }
 
-    private RecipeResponse convertRecipeToRecipeResponse(Recipe recipe){
-        return RecipeResponse.builder()
+    private RecipeDto convertRecipeToRecipeDto(Recipe recipe){
+        return RecipeDto.builder()
                 .recipeId(recipe.getRecipeId())
                 .title(recipe.getTitle())
                 .ingredients(recipe.getIngredients())
@@ -202,6 +196,20 @@ public class RecipeService {
                 .user(getCurrentUser())
                 .date(LocalDate.now())
                 .build();
+    }
+    private RecipeResponse convertToRecipeResponse(List<Recipe> recipes, Page<Recipe> recipePage){
+        List<RecipeDto> responseList = new ArrayList<>();
+        for (Recipe recipe : recipes){
+            responseList.add(convertRecipeToRecipeDto(recipe));
+        }
+        return RecipeResponse.builder()
+                .content(responseList)
+                .pageNumber(recipePage.getNumber())
+                .pageSize(recipePage.getSize())
+                .totalElements(recipePage.getTotalElements())
+                .totalPages(recipePage.getTotalPages())
+                .build();
+
     }
 
     private float calculateRating(Recipe recipe){
