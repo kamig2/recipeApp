@@ -69,7 +69,7 @@ public class RecipeService {
 
     //sprawdzić wszystkie publiczne przepisy wybranego usera
     public List<RecipeResponse> getUserAllRecipe(Long userId){
-        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
         List<RecipeResponse> responseList = new ArrayList<>();
         List<Recipe> recipes = user.getRecipes();
         for (Recipe recipe : recipes){
@@ -278,7 +278,7 @@ public class RecipeService {
 
     //wszystkie opinie wybranego urzytkownika
     public List<RatingResponse> getUserAllRatings(Long userId) {
-        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
         List<Rating> ratingList = user.getRatingList();
         List<RatingResponse> responseList = new ArrayList<>();
         for (Rating rating : ratingList){
