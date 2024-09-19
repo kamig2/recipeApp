@@ -135,8 +135,10 @@ public class RecipeService {
             if (request.getDescription() != null){
                 recipe.setDescription(request.getDescription());
             }
+            if (request.getIngredients() != null){
+                recipe.setIngredients(request.getIngredients());
+            }
             if (request.getFiles() != null){
-                System.out.println("w srodku");
                 deleteImages(recipe);
                 recipe.setImageUrls(saveImages(request.getFiles()));//todo przy update jesli np dodaje tylko 1 zdj reszta zostaje takich samych żeby sie nie duplikowały
             }

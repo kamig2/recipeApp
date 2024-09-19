@@ -28,9 +28,9 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getAllRecipes(pageNumber,pageSize));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RecipeDto> getRecipe(@PathVariable Long id){
-        return ResponseEntity.ok(recipeService.getRecipe(id));
+    @GetMapping("/{recipeId}")
+    public ResponseEntity<RecipeDto> getRecipe(@PathVariable Long recipeId){
+        return ResponseEntity.ok(recipeService.getRecipe(recipeId));
     }
 
     @GetMapping("/user/{userId}")
@@ -78,12 +78,12 @@ public class RecipeController {
         return new ResponseEntity<>(recipeService.addRecipe(request), HttpStatus.CREATED);
     }
 
-    @PutMapping(value = "/update/{recipeId}",
+    @PutMapping(value = "/{recipeId}",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<RecipeDto> updateRecipe(@PathVariable Long recipeId,
                                                   @RequestParam(value = "title",required = false) String title,
-                                                  @RequestParam(value = "ingredients") String ingredients,
+                                                  @RequestParam(value = "ingredients",required = false) String ingredients,
                                                   @RequestParam(value = "description",required = false) String description,
                                                   @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
         RecipeRequest request = RecipeRequest.builder()
@@ -95,7 +95,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.updateRecipe(recipeId,request/*,files*/));
 
     }
-    @DeleteMapping("/delete/{recipeId}")
+    @DeleteMapping("/{recipeId}")
     public ResponseEntity<String> deleteRecipe(@PathVariable Long recipeId){
         return ResponseEntity.ok(recipeService.deleteRecipe(recipeId));
     }
