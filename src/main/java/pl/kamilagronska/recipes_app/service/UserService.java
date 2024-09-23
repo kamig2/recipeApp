@@ -26,7 +26,7 @@ public class UserService {
     }
 
     public UserResponse getUserById(Long userId) {
-        User user = userRepository.findUserByUserId(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return convertUserToUserResponse(user);
     }
 

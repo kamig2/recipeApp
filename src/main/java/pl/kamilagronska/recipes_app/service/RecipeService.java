@@ -55,13 +55,13 @@ public class RecipeService {
 
     // wyswietla prxepis o danym id
     public RecipeDto getRecipe(Long id){
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
+        Recipe recipe = recipeRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
         return convertRecipeToRecipeDto(recipe);
     }
 
     //wszystkie przepisy wybranego usera
     public RecipeResponse getUserAllRecipe(Long userId,int pageNumber, int pageSize){
-        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
         Pageable pageable = PageRequest.of(pageNumber,pageSize);
         Page<Recipe> recipePage = recipeRepository.findAllByUser(user,pageable);
         List<Recipe> recipes = recipePage.getContent();
@@ -125,7 +125,7 @@ public class RecipeService {
 
     //update przepisu  każy user może updatować tylko dodane przez niego przepisy
     public RecipeDto updateRecipe(Long id, RecipeRequest request) throws IOException {//przy update ocena float to średnia z ocen int z encji rating
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
+        Recipe recipe = recipeRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
 
         if (recipe.getUser().equals(getCurrentUser())){//jesli user niezmienionego przepisu jest równy currentUser
 
@@ -156,13 +156,13 @@ public class RecipeService {
     //usuwanie przepisu o wybranym id, tylko właściciel przepisu i admin może go usunąć
     @Transactional
     public String deleteRecipe(Long recipeId) {
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
+        Recipe recipe = recipeRepository.findById(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
 
         if (recipe.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN)){
 
             recipe.getUser().getRecipes().remove(recipe); //usunięcie przepisu z listy przepisów usera
             deleteImages(recipe);//usuwanie niepotrzebnych juz zdjęc (które byłu przypisane do usuwanego przepisu)
-            recipeRepository.deleteByRecipeId(recipeId);
+            recipeRepository.deleteById(recipeId);
 
             return "Recipe deleted";
         }
@@ -260,7 +260,7 @@ public class RecipeService {
 
     //wszystkie opinie do wybranego przepisu
     public List<RatingResponse> getOpinions(Long recipeId) {
-        Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
+        Recipe recipe = recipeRepository.findById(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
         List<Rating> ratingList = recipe.getRatingList();
         List<RatingResponse> responseList = new ArrayList<>();
         for(Rating rating : ratingList){
@@ -271,7 +271,7 @@ public class RecipeService {
 
     //wszystkie opinie wybranego urzytkownika
     public List<RatingResponse> getUserAllRatings(Long userId) {
-        User user = userRepository.findUserByUserId(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User not found"));
         List<Rating> ratingList = user.getRatingList();
         List<RatingResponse> responseList = new ArrayList<>();
         for (Rating rating : ratingList){
@@ -322,13 +322,13 @@ public class RecipeService {
 
     //zmiana wybranej opini, tylko własciciel moze zmiecnic
     public RatingResponse updateOpinion(Long recipeId, Long ratingId, RatingRequest request) {
-        Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new ResourceNotFoundException("Rating not found"));
+        Rating rating = ratingRepository.findById(ratingId).orElseThrow(()->new ResourceNotFoundException("Rating not found"));
         if (rating.getUser().equals(getCurrentUser())){
             rating.setRate(request.getRate());
             rating.setOpinion(request.getOpininion());
             ratingRepository.save(rating);
 
-            Recipe recipe = recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
+            Recipe recipe = recipeRepository.findById(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found"));
             recipe.setRating(calculateRating(recipe));
             recipeRepository.save(recipe);
             return convertRatingToRatingResponse(rating);
@@ -340,7 +340,7 @@ public class RecipeService {
     //usuwanie opini tylko właściciel opini oraz admin może ją usunąc
     @Transactional
     public String deleteOpinion(Long ratingId){
-        Rating rating = ratingRepository.findRatingById(ratingId).orElseThrow(()->new ResourceNotFoundException("Rating not found"));
+        Rating rating = ratingRepository.findById(ratingId).orElseThrow(()->new ResourceNotFoundException("Rating not found"));
 
         if(rating.getUser().equals(getCurrentUser()) || getCurrentUser().getRole().equals(Role.ADMIN) ){
             Recipe recipe = rating.getRecipe();
@@ -360,7 +360,7 @@ public class RecipeService {
         return Rating.builder()
                 .rate(request.getRate())
                 .opinion(request.getOpininion())
-                .recipe(recipeRepository.findRecipeByRecipeId(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found")))
+                .recipe(recipeRepository.findById(recipeId).orElseThrow(()->new ResourceNotFoundException("Recipe not found")))
                 .user(getCurrentUser())
                 .build();
     }

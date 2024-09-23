@@ -11,9 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe,Long> {
-    Optional<Recipe> findRecipeByRecipeId(Long id);
-    void deleteByRecipeId(Long id);
-
     Page<Recipe> findAllByTitleContainingOrIngredientsContaining(String titlePhrase,String ingredientsPhrase,Pageable pageable);
     Page<Recipe> findAllByUser(User user, Pageable pageable);
 
