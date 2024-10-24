@@ -5,12 +5,7 @@ In addition to recipe management, RecipeApp allows users to leave reviews and ra
 
 ## Table of Contents 
 1. [Description](#description)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Requirements](#requirements)
-5. [Contributing](#contributing)
-6. [License](#license)
-7. [Authors](#authors)
+2. [Requirements](#requirements)
 
 ## Description
 
@@ -36,15 +31,36 @@ Key Features:
    
 6. Community Engagement: Users can leave reviews and ratings on recipes shared by others, fostering interaction and collaboration within the culinary community. This feedback mechanism helps users discover popular dishes and share their culinary experiences.
 
-![Swagger Documentation Screenshot]()
+Screenshot of Swagger API documentation showing available endpoints:
+
+![Swagger Documentation Screenshot](SwaggerDocumentation.png)
 
 Technology Stack:
 
 RecipeApp is created using Java and the Spring Boot framework, which makes it easier to develop the application and allows it to grow as needed. The application uses a MySQL database to store data efficiently and ensure quick access to information. This choice of technologies makes the backend strong, easy to manage, and simple to deploy.
 
 
+## Requirements
 
+List the dependencies and software versions required:
 
+1. **Java Development Kit (JDK)**:
+   - The application requires JDK 17 or higher. You can download it from [Adoptium](https://adoptium.net/) or [Oracle](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html).
 
+2. **Maven**:
+   - Apache Maven is required to manage the project’s dependencies and build the application. You can download it from the [Maven website](https://maven.apache.org/download.cgi).
 
+3. **MySQL Database**:
+   - MySQL is used for data storage. Ensure that you have MySQL installed and running on your machine. You can download it from [MySQL Community Server](https://dev.mysql.com/downloads/mysql/).
+
+4. **Dependencies**:
+   - The project includes several dependencies for functionality, including:
+     - **Spring Boot Starter Data JPA**: For data access and manipulation.
+     - **Spring Boot Starter Web**: To build web applications.
+     - **Spring Boot Starter Security**: For authentication and authorization.
+     - **Springdoc OpenAPI**: For API documentation (version **2.0.2**).
+     - **JUnit**: For testing purposes (version specified in the scope).
+     - **Spring Security Test**: For testing security aspects (version specified in the scope).
+     - **JWT**: For handling JSON Web Tokens for security (version **0.12.6**).
+     - **H2 Database**: For in-memory testing (version **2.3.232**, only in test scope).
 
