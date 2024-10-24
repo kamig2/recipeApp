@@ -68,7 +68,6 @@ public class RecipeController {
                                                @RequestParam(value = "ingredients") String ingredients,
                                                @RequestParam("description") String description,
                                                @RequestParam(value = "files",required = false)List<MultipartFile> files) throws IOException {
-        //todo możliwośc wybrania które zdj z listy będzie wyswietlane na "okładce"
         RecipeRequest request = RecipeRequest.builder()
                 .title(title)
                 .ingredients(ingredients)

@@ -140,7 +140,7 @@ public class RecipeService {
             }
             if (request.getFiles() != null){
                 deleteImages(recipe);
-                recipe.setImageUrls(saveImages(request.getFiles()));//todo przy update jesli np dodaje tylko 1 zdj reszta zostaje takich samych żeby sie nie duplikowały
+                recipe.setImageUrls(saveImages(request.getFiles()));
             }
 
             recipe.setDate(LocalDate.now());
@@ -172,7 +172,7 @@ public class RecipeService {
     private User getCurrentUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsserame = authentication.getName();
-        userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new ResourceNotFoundException("User not found"));
+//        userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new ResourceNotFoundException("User not found"));
         return userRepository.findUserByUserName(currentUsserame).orElseThrow(()->new ResourceNotFoundException("User not found"));
     }
 
